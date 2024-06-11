@@ -255,3 +255,41 @@ test('renders a separator block', function() {
     ])
   ).toEqual('Before' + '\n' + '\n' + '---' + '\n' + 'After' + '\n')
 });
+
+test('renders a multi-line code block', function() {
+  expect(
+    render([
+        {insert: "\nhello"},
+        {attributes: {"code-block": "plain"}, insert: "\n"},
+        {insert: "world"},
+        {attributes: {"code-block": "plain"}, insert: "\n"},
+        {insert: "\n"}
+    ])
+  ).toEqual('\n```\nhello\nworld\n```\n');
+});
+
+test('renders a simple code block', function() {
+    expect(
+        render([
+            {insert: "\nhello"},
+            {attributes: {"code-block": "plain"}, insert: "\n"},
+            {insert: "\n"}
+        ])
+    ).toEqual('\n```\nhello\n```\n');
+});
+
+test('renders a multiple code blocks', function() {
+    expect(
+        render([
+            {insert: "\none"},
+            {attributes: {"code-block": "plain"}, insert: "\n"},
+            {insert: "two"},
+            {attributes: {"code-block": "plain"}, insert: "\n\n"},
+            {insert: "\n\nthree"},
+            {attributes: {"code-block": "plain"}, insert: "\n"},
+            {insert: "\n"}
+
+        ])
+    ).toEqual('\n```\none\ntwo\n\n```\n\n\n```\nthree\n```\n');
+});
+

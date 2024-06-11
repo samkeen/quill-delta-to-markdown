@@ -50,6 +50,13 @@ module.exports = {
           this.open = count + '. ' + this.open;
         }
       },
+    },
+    'code-block': function(attrs, group, inCodeBlock) {
+      if (!inCodeBlock) {
+        inCodeBlock = true;
+        this.open = '```\n';
+      }
+      return inCodeBlock;
     }
   },
 }

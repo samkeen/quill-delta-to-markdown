@@ -5,10 +5,10 @@ const defaultConverters = require('./fromDelta.converters');
 const Node = require('./utils/Node');
 
 exports = module.exports = function(ops, converters = defaultConverters) {
-  return trimEnd(convert(ops, converters).render()) + '\n';
+  return trimEnd(convert(ops, converters, false).render()) + '\n';
 };
 
-function convert(ops, converters) {
+function convert(ops, converters, inCodeBlock) {
   var group, line, el, activeInline, beginningOfLine;
   var root = new Node();
 
@@ -32,6 +32,23 @@ function convert(ops, converters) {
     } else {
       var lines = op.insert.split('\n');
 
+      // If the operation starts with a newline and follows a code-block line,
+      // close the code block by appending the closing '```' to the current line
+      // or creating a new line with the closing '```'
+      if (op.insert.startsWith("\n")) {
+        var prevNode = ops[i - 1];
+        if (prevNode && prevNode.attributes && 'code-block' in prevNode.attributes) {
+          if (el.children.length === 0 || (el.children.length === 1 && el.children[0].text === '')) {
+            el.append('```\n');
+          } else {
+            el = new Node(['', '```\n']);
+            root.append(el);
+          }
+          inCodeBlock = false; // Reset inCodeBlock after closing the code block
+        }
+      }
+
+      // If the operation has block-level attributes
       if (hasBlockLevelAttribute(op.attributes, converters)) {
         // Some line-level styling (ie headings) is applied by inserting a \n
         // with the style; the style applies back to the previous \n.
@@ -49,7 +66,7 @@ function convert(ops, converters) {
                   group = {
                     el: fn.group(),
                     type: attr,
-                    value: op.attributes[k],
+                    value: op.attributes[attr],
                     distance: 0,
                   };
                   root.append(group.el);
@@ -61,8 +78,8 @@ function convert(ops, converters) {
                 }
                 fn = fn.line;
               }
-
-              fn.call(line, op.attributes, group);
+              // Call the block converter function and update inCodeBlock
+              inCodeBlock = fn.call(line, op.attributes, group, inCodeBlock);
               newLine();
               break
             }
